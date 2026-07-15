@@ -154,8 +154,8 @@ Haroon Al Rashith A
 
 B.Tech Artificial Intelligence and Data Science
 
-- LinkedIn: https://linkedin.com/in/haroon-bashi
-- GitHub: https://github.com/haroonbashi2514
+- LinkedIn: www.linkedin.com/in/kishoreuthandi 
+- GitHub: https://github.com/kishoreuthandi
 
 ---
-oading README.md…]()
+loading README.md…]()
