@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ZORO 2026 — Control Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap');
+
+:root {
+  --bg: #060a10;
+  --panel: #0b1220;
+  --border: #1a3a5c;
+  --accent: #0d7fff;
+  --accent2: #00e5ff;
+  --dim: #4a7fa0;
+  --text: #c8dff0;
+  --muted: #4a6a80;
+  --success: #00e676;
+  --warn: #ffab00;
+  --danger: #ff3d57;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Exo 2', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(13,127,255,0.03) 40px, rgba(13,127,255,0.03) 41px),
+    repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(13,127,255,0.03) 40px, rgba(13,127,255,0.03) 41px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(11,18,32,0.95);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.logo {
+  font-family: 'Orbitron', monospace;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--accent2);
+  text-shadow: 0 0 20px rgba(0,229,255,0.4);
+}
+
+.logo span { color: var(--accent); }
+
+.status-bar {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.status-dot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.dot.green { background: var(--success); box-shadow: 0 0 6px var(--success); animation: pulse 2s infinite; }
+.dot.red { background: var(--danger); }
+.dot.yellow { background: var(--warn); animation: pulse 1s infinite; }
+
+@keyframes pulse {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.time-display {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: 2px;
+}
+
+.main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto auto;
+  gap: 16px;
+  padding: 20px 32px;
+  position: relative;
+  z-index: 1;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.6;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(13,127,255,0.05);
+}
+
+.panel-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.panel-badge {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--muted);
+}
+
+.panel-body { padding: 16px; }
+
+/* VIDEO STREAM */
+.video-panel { grid-column: 1; grid-row: 1 / 3; }
+
+.video-wrapper {
+  position: relative;
+  background: #000;
+  aspect-ratio: 4/3;
+  overflow: hidden;
+}
+
+.video-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.corner {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: var(--accent2);
+  border-style: solid;
+  opacity: 0.7;
+}
+.corner.tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; }
+.corner.tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; }
+.corner.bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; }
+.corner.br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; }
+
+.rec-indicator {
+  position: absolute;
+  top: 12px; right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  color: var(--danger);
+  background: rgba(0,0,0,0.6);
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+
+.video-actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.3);
+}
+
+/* ATTENDANCE */
+.attendance-panel { grid-column: 2; grid-row: 1; }
+
+.attend-result {
+  min-height: 60px;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  line-height: 1.6;
+}
+
+.attend-list {
+  max-height: 120px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+.attend-list::-webkit-scrollbar { width: 4px; }
+.attend-list::-webkit-scrollbar-track { background: transparent; }
+.attend-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.attend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 12px;
+  border-bottom: 1px solid rgba(26,58,92,0.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+}
+
+.attend-row:last-child { border-bottom: none; }
+.attend-name { color: var(--accent2); }
+.attend-time { color: var(--muted); }
+
+/* FACE UPLOAD */
+.faces-panel { grid-column: 2; grid-row: 2; }
+
+.face-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+  min-height: 80px;
+}
+
+.face-card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 4px;
+  text-align: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  position: relative;
+}
+
+.face-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  margin: 0 auto 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #fff;
+  font-family: 'Exo 2', sans-serif;
+  font-weight: 600;
+}
+
+/* VOICE AGENT */
+.voice-panel { grid-column: 1; grid-row: 3; }
+
+.transcript-box {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 12px;
+  min-height: 100px;
+  max-height: 150px;
+  overflow-y: auto;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.transcript-box::-webkit-scrollbar { width: 4px; }
+.transcript-box::-webkit-scrollbar-thumb { background: var(--border); }
+
+.tx-student { color: var(--accent2); }
+.tx-zoro { color: var(--success); }
+.tx-label { color: var(--muted); font-size: 10px; }
+.tx-empty { color: var(--muted); font-style: italic; }
+
+.voice-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 30px;
+  margin-bottom: 12px;
+}
+
+.vbar {
+  flex: 1;
+  background: var(--accent);
+  border-radius: 1px;
+  min-height: 3px;
+  transition: height 0.1s;
+  opacity: 0.3;
+}
+
+.vbar.active { opacity: 1; animation: vbar-bounce 0.3s infinite alternate; }
+
+@keyframes vbar-bounce {
+  from { transform: scaleY(0.3); }
+  to { transform: scaleY(1); }
+}
+
+/* SYLLABUS */
+.syllabus-panel { grid-column: 2; grid-row: 3; }
+
+.syllabus-list {
+  min-height: 60px;
+  max-height: 100px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-bottom: 12px;
+}
+
+.syl-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 12px;
+  border-bottom: 1px solid rgba(26,58,92,0.4);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+}
+
+.syl-row:last-child { border-bottom: none; }
+.syl-name { color: var(--text); }
+.syl-ok { color: var(--success); font-size: 10px; }
+
+/* BUTTONS */
+.btn {
+  font-family: 'Orbitron', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  border-radius: 2px;
+  text-transform: uppercase;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--accent);
+  color: #000;
+  box-shadow: 0 0 16px rgba(13,127,255,0.4);
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn.success { border-color: var(--success); color: var(--success); }
+.btn.success:hover { background: var(--success); color: #000; box-shadow: 0 0 16px rgba(0,230,118,0.4); }
+
+.btn.warn { border-color: var(--warn); color: var(--warn); }
+.btn.warn:hover { background: var(--warn); color: #000; }
+
+.btn.danger { border-color: var(--danger); color: var(--danger); }
+.btn.danger:hover { background: var(--danger); color: #fff; }
+
+.btn.full { width: 100%; text-align: center; }
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* FILE INPUT */
+.file-input-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+
+.file-input-wrap input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.file-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 3px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.file-label:hover { border-color: var(--accent); color: var(--accent); }
+
+.name-input {
+  width: 100%;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+  outline: none;
+  margin-bottom: 8px;
+}
+
+.name-input:focus { border-color: var(--accent); }
+.name-input::placeholder { color: var(--muted); }
+
+.metric-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.metric {
+  flex: 1;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 10px;
+  text-align: center;
+}
+
+.metric-val {
+  font-family: 'Orbitron', monospace;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--accent2);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.metric-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.msg {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 2px;
+  margin-top: 8px;
+  display: none;
+}
+.msg.ok { background: rgba(0,230,118,0.1); border: 1px solid var(--success); color: var(--success); display: block; }
+.msg.err { background: rgba(255,61,87,0.1); border: 1px solid var(--danger); color: var(--danger); display: block; }
+.msg.info { background: rgba(13,127,255,0.1); border: 1px solid var(--accent); color: var(--accent); display: block; }
+
+.scan-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 10;
+  display: none;
+}
+
+.scan-ring {
+  width: 80px; height: 80px;
+  border: 3px solid transparent;
+  border-top-color: var(--accent2);
+  border-right-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.scan-text {
+  font-family: 'Orbitron', monospace;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--accent2);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Z<span>O</span>RO <span style="font-size:13px;font-weight:400;color:var(--dim)">2026</span></div>
+  <div class="status-bar">
+    <div class="status-dot"><div class="dot green" id="pi-dot"></div><span id="pi-status">PI CONNECTED</span></div>
+    <div class="status-dot"><div class="dot green" id="cam-dot"></div><span>CAMERA LIVE</span></div>
+    <div class="status-dot"><div class="dot yellow" id="voice-dot"></div><span id="voice-status">VOICE READY</span></div>
+  </div>
+  <div class="time-display" id="clock">--:--:--</div>
+</div>
+
+<div class="main">
+
+  <!-- VIDEO PANEL -->
+  <div class="panel video-panel">
+    <div class="panel-header">
+      <div class="panel-title">Live Feed</div>
+      <div class="panel-badge" id="fps-badge">MJPEG STREAM</div>
+    </div>
+    <div class="video-wrapper">
+      <img id="stream-img" src="http://localhost:8001/robot/video.mjpeg" alt="Live feed" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22640%22 height=%22480%22><rect fill=%22%230b1220%22 width=%22640%22 height=%22480%22/><text x=%22320%22 y=%22240%22 fill=%22%234a6a80%22 font-size=%2218%22 text-anchor=%22middle%22 font-family=%22monospace%22>NO SIGNAL</text></svg>'"/>
+      <div class="video-overlay">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+        <div class="rec-indicator"><div class="dot red"></div> LIVE</div>
+      </div>
+      <div class="scan-overlay" id="scan-overlay">
+        <div class="scan-ring"></div>
+        <div class="scan-text">SCANNING FACES...</div>
+      </div>
+    </div>
+    <div class="video-actions">
+      <button class="btn success" onclick="markAttendance()">▶ MARK ATTENDANCE</button>
+      <button class="btn" onclick="takeSnapshot()">⊙ SNAPSHOT</button>
+      <a href="http://localhost:8001/attendance/today.csv" download>
+        <button class="btn warn">↓ CSV</button>
+      </a>
+    </div>
+  </div>
+
+  <!-- ATTENDANCE PANEL -->
+  <div class="panel attendance-panel">
+    <div class="panel-header">
+      <div class="panel-title">Attendance</div>
+      <div class="panel-badge" id="present-badge">0 PRESENT</div>
+    </div>
+    <div class="panel-body">
+      <div class="metric-row">
+        <div class="metric">
+          <div class="metric-val" id="m-present">0</div>
+          <div class="metric-label">Present Today</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" id="m-faces">0</div>
+          <div class="metric-label">Known Faces</div>
+        </div>
+      </div>
+      <div class="attend-result" id="attend-result">— awaiting scan —</div>
+      <div class="attend-list" id="attend-list">
+        <div class="attend-row"><span class="attend-name" style="color:var(--muted)">No records yet</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FACE UPLOAD PANEL -->
+  <div class="panel faces-panel">
+    <div class="panel-header">
+      <div class="panel-title">Register Face</div>
+      <div class="panel-badge">FACE DB</div>
+    </div>
+    <div class="panel-body">
+      <div class="face-grid" id="face-grid">
+        <div style="color:var(--muted);font-size:11px;font-family:'Share Tech Mono',monospace;grid-column:1/-1;text-align:center;padding:20px 0;">No faces registered yet</div>
+      </div>
+      <input class="name-input" id="face-name" type="text" placeholder="STUDENT NAME..."/>
+      <div class="file-input-wrap">
+        <div class="file-label" id="face-file-label">⊕ SELECT PHOTO (JPG/PNG)</div>
+        <input type="file" id="face-file" accept="image/*" onchange="faceFileChanged(this)"/>
+      </div>
+      <button class="btn full success" onclick="uploadFace()">UPLOAD FACE</button>
+      <div class="msg" id="face-msg"></div>
+    </div>
+  </div>
+
+  <!-- VOICE PANEL -->
+  <div class="panel voice-panel">
+    <div class="panel-header">
+      <div class="panel-title">Voice Agent</div>
+      <div class="panel-badge" id="voice-badge">DEEPGRAM + GPT-4o</div>
+    </div>
+    <div class="panel-body">
+      <div class="voice-bars" id="vbars">
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+        <div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div><div class="vbar"></div>
+      </div>
+      <div class="transcript-box" id="transcript-box">
+        <div class="tx-empty">Say "Hello Zoro" to wake the voice agent...</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn success" onclick="pollTranscripts()">⟳ REFRESH TRANSCRIPT</button>
+        <button class="btn" onclick="testSpeak()">▷ TEST SPEAK</button>
+        <button class="btn danger" onclick="clearTranscript()">✕ CLEAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYLLABUS PANEL -->
+  <div class="panel syllabus-panel">
+    <div class="panel-header">
+      <div class="panel-title">Syllabus Upload</div>
+      <div class="panel-badge">AI KNOWLEDGE BASE</div>
+    </div>
+    <div class="panel-body">
+      <div class="syllabus-list" id="syllabus-list">
+        <div class="syl-row"><span class="syl-name" style="color:var(--muted)">No files uploaded yet</span></div>
+      </div>
+      <div class="file-input-wrap">
+        <div class="file-label" id="syl-file-label">⊕ SELECT FILE (TXT / PDF / DOCX / MD)</div>
+        <input type="file" id="syl-file" accept=".txt,.md,.pdf,.docx,.csv" onchange="sylFileChanged(this)"/>
+      </div>
+      <button class="btn full" onclick="uploadSyllabus()">UPLOAD TO ZORO</button>
+      <div class="msg" id="syl-msg"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BASE = 'http://localhost:8001';
+const uploadedFiles = [];
+const registeredFaces = [];
+let transcripts = [];
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('en-IN', {hour12: false});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Metrics
+async function loadMetrics() {
+  try {
+    const r = await fetch(BASE + '/metrics');
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('m-present').textContent = d.present_today || 0;
+    document.getElementById('m-faces').textContent = d.known_faces || 0;
+    document.getElementById('present-badge').textContent = (d.present_today || 0) + ' PRESENT';
+  } catch(e) {}
+}
+loadMetrics();
+setInterval(loadMetrics, 10000);
+
+// Load today's attendance CSV
+async function loadAttendance() {
+  try {
+    const r = await fetch(BASE + '/attendance/today.csv');
+    const text = await r.text();
+    const lines = text.trim().split('\n').slice(1).filter(Boolean);
+    const list = document.getElementById('attend-list');
+    if (!lines.length) {
+      list.innerHTML = '<div class="attend-row"><span class="attend-name" style="color:var(--muted)">No records yet</span></div>';
+      return;
+    }
+    list.innerHTML = lines.map(l => {
+      const [name, time] = l.split(',');
+      return `<div class="attend-row"><span class="attend-name">${name||''}</span><span class="attend-time">${time||''}</span></div>`;
+    }).join('');
+  } catch(e) {}
+}
+loadAttendance();
+
+// Mark attendance from robot camera
+async function markAttendance() {
+  const overlay = document.getElementById('scan-overlay');
+  overlay.style.display = 'flex';
+  const res = document.getElementById('attend-result');
+  res.textContent = 'Capturing from robot camera...';
+  try {
+    const r = await fetch(BASE + '/attendance/mark-from-robot', { method: 'POST' });
+    const d = await r.json();
+    if (d.recognized && d.recognized.length) {
+      res.textContent = '✓ Marked: ' + d.recognized.join(', ');
+    } else if (d.unknown) {
+      res.textContent = '⚠ Face detected but not recognized';
+    } else {
+      res.textContent = d.message || JSON.stringify(d);
+    }
+    loadAttendance();
+    loadMetrics();
+  } catch(e) {
+    res.textContent = '✕ Error: ' + e.message;
+  } finally {
+    overlay.style.display = 'none';
+  }
+}
+
+// Snapshot
+async function takeSnapshot() {
+  window.open(BASE + '/robot/snapshot.jpg', '_blank');
+}
+
+// Face file changed
+function faceFileChanged(input) {
+  const label = document.getElementById('face-file-label');
+  label.textContent = input.files[0] ? '✓ ' + input.files[0].name : '⊕ SELECT PHOTO';
+}
+
+// Upload face
+async function uploadFace() {
+  const name = document.getElementById('face-name').value.trim();
+  const file = document.getElementById('face-file').files[0];
+  const msg = document.getElementById('face-msg');
+  msg.className = 'msg';
+
+  if (!name) { msg.className='msg err'; msg.textContent='Enter student name'; return; }
+  if (!file) { msg.className='msg err'; msg.textContent='Select a photo'; return; }
+
+  const formData = new FormData();
+  // Save as name.jpg in known_faces folder via syllabus-like endpoint or direct
+  // Using the data folder path naming convention
+  const renamed = new File([file], name.replace(/\s+/g,'_') + '.' + file.name.split('.').pop(), { type: file.type });
+  formData.append('file', renamed);
+
+  msg.className='msg info'; msg.textContent='Uploading...';
+
+  try {
+    // Upload to known_faces directory by using a dedicated path
+    const r = await fetch(BASE + '/attendance/upload-face', {
+      method: 'POST',
+      body: formData
+    });
+    if (r.ok) {
+      const d = await r.json();
+      msg.className='msg ok'; msg.textContent='✓ Face registered: ' + name;
+      addFaceCard(name);
+      document.getElementById('face-name').value = '';
+      document.getElementById('face-file').value = '';
+      document.getElementById('face-file-label').textContent = '⊕ SELECT PHOTO (JPG/PNG)';
+      loadMetrics();
+      // Reload faces on pi
+      await fetch(BASE + '/attendance/reload-faces', { method: 'POST' });
+    } else {
+      const err = await r.json().catch(() => ({}));
+      // Fallback: show instruction
+      msg.className='msg info';
+      msg.textContent = '⚠ Save photo as: known_faces/' + name.replace(/\s+/g,'_') + '.jpg on Pi';
+    }
+  } catch(e) {
+    msg.className='msg info';
+    msg.textContent = '⚠ Save photo manually as known_faces/' + name.replace(/\s+/g,'_') + '.jpg on Pi';
+  }
+}
+
+function addFaceCard(name) {
+  const grid = document.getElementById('face-grid');
+  const existing = grid.querySelector('[data-empty]');
+  if (existing) existing.remove();
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const card = document.createElement('div');
+  card.className = 'face-card';
+  card.innerHTML = `<div class="face-avatar">${initials}</div>${name.split(' ')[0]}`;
+  grid.appendChild(card);
+}
+
+// Syllabus file changed
+function sylFileChanged(input) {
+  const label = document.getElementById('syl-file-label');
+  label.textContent = input.files[0] ? '✓ ' + input.files[0].name : '⊕ SELECT FILE';
+}
+
+// Upload syllabus
+async function uploadSyllabus() {
+  const file = document.getElementById('syl-file').files[0];
+  const msg = document.getElementById('syl-msg');
+  msg.className = 'msg';
+  if (!file) { msg.className='msg err'; msg.textContent='Select a file first'; return; }
+
+  const formData = new FormData();
+  formData.append('file', file);
+  msg.className='msg info'; msg.textContent='Uploading...';
+
+  try {
+    const r = await fetch(BASE + '/syllabus/upload', { method: 'POST', body: formData });
+    if (r.ok) {
+      const d = await r.json();
+      msg.className='msg ok'; msg.textContent='✓ Uploaded: ' + d.filename;
+      addSyllabusRow(file.name);
+      document.getElementById('syl-file').value = '';
+      document.getElementById('syl-file-label').textContent = '⊕ SELECT FILE (TXT / PDF / DOCX / MD)';
+    } else {
+      const err = await r.json().catch(()=>({}));
+      msg.className='msg err'; msg.textContent = '✕ ' + (err.detail || 'Upload failed');
+    }
+  } catch(e) {
+    msg.className='msg err'; msg.textContent='✕ ' + e.message;
+  }
+}
+
+function addSyllabusRow(name) {
+  const list = document.getElementById('syllabus-list');
+  const empty = list.querySelector('[data-empty]');
+  if (empty) empty.remove();
+  const noRecord = [...list.querySelectorAll('.syl-name')].find(el => el.style.color === 'var(--muted)');
+  if (noRecord) noRecord.closest('.syl-row').remove();
+
+  const row = document.createElement('div');
+  row.className = 'syl-row';
+  row.innerHTML = `<span class="syl-name">${name}</span><span class="syl-ok">✓ LOADED</span>`;
+  list.appendChild(row);
+}
+
+// Transcripts
+async function pollTranscripts() {
+  try {
+    const r = await fetch(BASE + '/conversation/history?limit=20');
+    const d = await r.json();
+    const box = document.getElementById('transcript-box');
+    if (!d.items || !d.items.length) return;
+    box.innerHTML = d.items.slice(-8).map(item => `
+      <div style="margin-bottom:10px;">
+        <div class="tx-label">STUDENT${item.student_name ? ' · ' + item.student_name : ''}</div>
+        <div class="tx-student">${item.question}</div>
+        <div class="tx-label" style="margin-top:4px;">ZORO</div>
+        <div class="tx-zoro">${item.answer}</div>
+      </div>
+    `).join('');
+    box.scrollTop = box.scrollHeight;
+    animateVoiceBars(true);
+    setTimeout(() => animateVoiceBars(false), 3000);
+  } catch(e) {}
+}
+
+function animateVoiceBars(active) {
+  document.querySelectorAll('.vbar').forEach((b, i) => {
+    if (active) {
+      b.style.height = (Math.random() * 80 + 10) + '%';
+      b.classList.add('active');
+    } else {
+      b.style.height = '10%';
+      b.classList.remove('active');
+    }
+  });
+}
+
+async function testSpeak() {
+  try {
+    animateVoiceBars(true);
+    await fetch(BASE + '/voice/speak', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: 'Hello! I am Zoro, your classroom teaching robot. How can I help you today?' })
+    });
+    setTimeout(() => animateVoiceBars(false), 4000);
+  } catch(e) {
+    animateVoiceBars(false);
+  }
+}
+
+function clearTranscript() {
+  document.getElementById('transcript-box').innerHTML = '<div class="tx-empty">Transcript cleared. Say "Hello Zoro" to begin...</div>';
+  animateVoiceBars(false);
+}
+
+// Voice bar idle animation
+setInterval(() => {
+  const bars = document.querySelectorAll('.vbar');
+  bars.forEach(b => {
+    if (!b.classList.contains('active')) {
+      b.style.height = (Math.random() * 15 + 3) + '%';
+      b.style.opacity = '0.2';
+    }
+  });
+}, 300);
+
+// Auto poll transcripts every 5s
+setInterval(pollTranscripts, 5000);
+
+// Health check
+async function checkHealth() {
+  try {
+    const r = await fetch(BASE + '/health');
+    const d = await r.json();
+    const piOk = d.pi && d.pi.ok;
+    document.getElementById('pi-dot').className = 'dot ' + (piOk ? 'green' : 'red');
+    document.getElementById('pi-status').textContent = piOk ? 'PI CONNECTED' : 'PI OFFLINE';
+  } catch(e) {
+    document.getElementById('pi-dot').className = 'dot red';
+    document.getElementById('pi-status').textContent = 'BACKEND OFFLINE';
+  }
+}
+checkHealth();
+setInterval(checkHealth, 15000);
+</script>
+</body>
+</html>

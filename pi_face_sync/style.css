@@ -1,0 +1,125 @@
+:root {
+  --bg: #02030a;
+  --face: #f7fbff;
+  --eye: #f7fbff;
+  --mouth: #f7fbff;
+}
+
+* {
+  box-sizing: border-box;
+  cursor: none !important;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--bg);
+  cursor: none;
+}
+
+.face {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.08), transparent 42%),
+    var(--bg);
+}
+
+.eye {
+  position: absolute;
+  top: 23vh;
+  width: 30vmin;
+  height: 19vmin;
+  border-radius: 50%;
+  background: var(--eye);
+  box-shadow: 0 0 22px rgba(96, 165, 250, 0.42);
+  overflow: hidden;
+  transform-origin: center;
+  transition: transform 180ms ease, height 180ms ease, border-radius 180ms ease;
+}
+
+.eye-left {
+  left: 14vw;
+}
+
+.eye-right {
+  right: 14vw;
+}
+
+.shine {
+  position: absolute;
+  width: 7vmin;
+  height: 4vmin;
+  left: 7vmin;
+  top: 4vmin;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  filter: blur(0.2vmin);
+}
+
+.lid {
+  position: absolute;
+  left: -10%;
+  width: 120%;
+  height: 0%;
+  background: var(--bg);
+  z-index: 2;
+  transition: height 80ms ease;
+}
+
+.lid-top {
+  top: 0;
+  border-radius: 0 0 50% 50%;
+}
+
+.lid-bottom {
+  bottom: 0;
+  border-radius: 50% 50% 0 0;
+}
+
+.mouth {
+  position: absolute;
+  left: 50%;
+  top: 67vh;
+  width: 28vmin;
+  height: 7vmin;
+  transform: translate(-50%, -50%);
+  border: 1.4vmin solid var(--mouth);
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(96, 165, 250, 0.35);
+  transition: width 90ms ease, height 90ms ease, border-radius 90ms ease, transform 90ms ease;
+}
+
+.mouth.a {
+  width: 20vmin;
+  height: 20vmin;
+  border-radius: 48%;
+}
+
+.mouth.i {
+  width: 34vmin;
+  height: 5vmin;
+  border-radius: 999px;
+}
+
+.mouth.o {
+  width: 18vmin;
+  height: 18vmin;
+  border-radius: 50%;
+}
+
+.mouth.u {
+  width: 12vmin;
+  height: 21vmin;
+  border-radius: 48%;
+}
+
+.mouth.rest {
+  width: 26vmin;
+  height: 5vmin;
+  border-radius: 999px;
+}
